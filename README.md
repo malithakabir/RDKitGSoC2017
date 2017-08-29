@@ -1,6 +1,6 @@
 # RDKitGSoC2017
 ## RDKit - 3Dmol.js integration
-#### Mentors: Paul Czodrowski and Greg Landrum<br>Acknowledgement: Peter Gedeck reviewed, provided advice on restructuring, and wrote initial MolViewState class. <br>Date: 29th August 2017<br>Email: malitha12345@gmail.com
+#### Mentors: Paul Czodrowski and Greg Landrum<br>Acknowledgement: Peter Gedeck reviewed codes, provided advice on code restructuring, and wrote initial MolViewState class. <br>Date: 29th August 2017<br>Email: malitha12345@gmail.com
 #### To visitor: We appriciate your ideas on adding new features in it. So, please don't hesitate to drop your words. 
 ### Tasks listed in GSoC 2017
 - A simple conformer browser (completed)
