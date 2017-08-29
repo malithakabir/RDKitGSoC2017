@@ -1,14 +1,13 @@
 # RDKitGSoC2017
 ## RDKit - 3Dmol.js integration
 #### Mentors: Paul Czodrowski and Greg Landrum<br>Acknowledgement: Peter Gedeck reviewed, provided advice on restructuring, and wrote initial MolViewState class. <br>Date: 29th August 2017<br>Email: malitha12345@gmail.com
-#### Disclaimer: We could not accomplished everything proposed in GSoC 2017 project proposal. We are still working on it!
 #### To visitor: We appriciate your ideas on adding new features in it. So, please don't hesitate to drop your words. 
 ### Tasks listed in GSoC 2017
 - A simple conformer browser (completed)
 - Energy minimization of ligand extracted from PBD file (completed)
 - Molecule editing (incomplete at the time of writing this - date : 29th August 2017)
-### About accomplishments and failue
-#### Accomplishement
+### About Last 3 Months
+#### Accomplishment
 - We have created a maintainable codesbase.
 - We have developed 3D molecule viewer (that includes conformer (ligand) browsing) for the FIRST TIME for RDKit.
 - We have utilized RDKit "standard Mol object" (created by reading PDB file) to separate protein and ligand.
@@ -38,8 +37,8 @@
 - Representation for ligand (energy minimized): line, cross, stick, ball-stick, surface
 - Ligand color for both 'parent' and 'energy minimized' can be changed.
 #### Mandatory Items And Panels In Viewer
-- molecule and conformer selection panel is mandatory for viewer. This panel can be minimal or full (inclued additional selection scheme).
-- visibility panel (checkbox name "ligandVisible", "proteinVisible", "emLigandVisible" (em = energy minimized)) is also mandatory.
+- Molecule and conformer selection panel is mandatory for viewer. This panel can be minimal or full (inclued additional selection scheme).
+- Visibility panel (checkbox name "ligandVisible", "proteinVisible", "emLigandVisible" (em = energy minimized)) is also mandatory.
 - Since molecule viewer background color has impact on visualization clarity it is also madatory item.
 - A button named "zoomTo" that used to focus the whole molecule has been kept as mandatory item.
 #### Optional Panels In Viewer
@@ -57,7 +56,7 @@
 - Greg Landrum was involed in deciding how the code should be written and he appeared at every critical decision/time. He wrote the ligand extarction system and asked to me to modify that. 
 - Peter Gedeck reviewed codes several times, wrote inital implementation of MolStateView class. His directions has made the codes maintainable.
 - David Koes solved py3Dmol related issues with detail example.
-- Brian Kelly reviewed for code mergability.
+- Brian Kelly reviewed for code mergeability.
 - Malitha Humayun Kabir wrote most of the codes and was the participant of Google Summer of Codes (GSoc) 2017.
 ### Remark
 - This page might not be updated in future for reference purpose but the repository may be updated with new notebooks (tutorials). 
