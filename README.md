@@ -46,7 +46,7 @@
 - propertyPanel - Panel for showing the properties exists in SD file and also the newly calculated properties
 - emPanel - Panel for showing minimization energy if exists in supplied dictionary
 - labelPanel - Panel for labeling conformers (molecule id and conformer id) and atoms (atom symbol and atom id)
-### Submitted to Mentors for Evaluation
+### Submitted To Mentors For Evaluation
 #### Through GitHub pull request to merge at rdkit:GSoC2017
 - Notebook demonstrating usability : https://github.com/malithakabir/RDKitGSoC2017/blob/master/BrowseMultimolsV8.ipynb
 - Visualization codes (Acknowledging Peter Gedeck): https://github.com/malithakabir/RDKitGSoC2017/blob/master/IPythonConsoleIntegration.py
