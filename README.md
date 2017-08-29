@@ -43,14 +43,20 @@
 - A button named "zoomTo" that used to focus the whole molecule has been kept as mandatory item.
 #### Optional Panels In Viewer
 - stylePanel - Panel for molecule representation
-- propertyPanel - Panel for showing the properties exists in SD file and also the newly calculated properties.
-- emPanel - Panel for showing minimization energy if exists in supplied dictionary. 
+- propertyPanel - Panel for showing the properties exists in SD file and also the newly calculated properties
+- emPanel - Panel for showing minimization energy if exists in supplied dictionary
+- labelPanel - Panel for labeling conformers (molecule id and conformer id) and atoms (atom symbol and atom id)
 ### Submitted Codes to Mentors for Evaluation
-- Notebook demonstrating usability: https://github.com/malithakabir/RDKitGSoC2017/blob/master/BrowseMultimolsV8.ipynb
+#### Through GitHub pull request to merge at rdkit:GSoC2017
+- Notebook demonstrating usability : https://github.com/malithakabir/RDKitGSoC2017/blob/master/BrowseMultimolsV8.ipynb
 - Visualization codes (Acknowledging Peter Gedeck): https://github.com/malithakabir/RDKitGSoC2017/blob/master/IPythonConsoleIntegration.py
 - Ligand extraction codes (mainly written by Greg Landrum): https://github.com/malithakabir/RDKitGSoC2017/blob/master/LigandExtract.py
+#### Not in pull request
+- Demonstrating panels and conformer browsing : https://github.com/malithakabir/RDKitGSoC2017/blob/master/GSoC2017_notebook_1_ConformerBrowse_panels_and_confSelection.ipynb
+- Demonstrating protein - ligand rendering and extraction of ligand from rdkit mol object : https://github.com/malithakabir/RDKitGSoC2017/blob/master/GSoC2017_notebook_2_ConformerBrowse_with_proteins.ipynb
 ### GitHub Pull Request Link
 - https://github.com/rdkit/rdkit/pull/1484
+- As per decision by mentors, codes from the aforementioned pulled request (all the development are in single pull request) would be merged today afternoon (european time) ( 29th August 2017)
 ### Contributors
 - Paul Czodrowski was involved in answering questions, writing proposal, defining directions, communicating with Peter Gedeck and Brian Kelly for code review and merge respectively, and final work product submission. He offered a lot of disscussion over google handout, emails, and gmail's chat service. 
 - Greg Landrum was involed in deciding how the code should be written and he appeared at every critical decision/time. He wrote the ligand extarction system and asked to me to modify that. 
