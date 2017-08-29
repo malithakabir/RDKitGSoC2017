@@ -8,8 +8,8 @@
 - Molecule editing (incomplete at the time of writing this - date : 29th August 2017)
 ### About Last 3 Months
 #### Accomplishment
-- We have created a maintainable codesbase.
-- We have developed 3D molecule viewer (that includes conformer (ligand) browsing) for the FIRST TIME for RDKit.
+- We have created a maintainable codesbase. (links at the bottom of this page)
+- We have developed 3D molecule viewer (that includes conformer (ligand) browsing) for RDKit.
 - We have utilized RDKit "standard Mol object" (created by reading PDB file) to separate protein and ligand.
 - We have enabled the viewer to show properties from SD file and minimization energy through ipython widgets.
 #### Difficulties
