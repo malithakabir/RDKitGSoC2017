@@ -54,8 +54,8 @@
 #### Not in pull request
 - Demonstrating panels and conformer browsing : https://github.com/malithakabir/RDKitGSoC2017/blob/master/GSoC2017_notebook_1_ConformerBrowse_panels_and_confSelection.ipynb
 - Demonstrating protein - ligand rendering and extraction of ligand from rdkit mol object : https://github.com/malithakabir/RDKitGSoC2017/blob/master/GSoC2017_notebook_2_ConformerBrowse_with_proteins.ipynb
-- Demonstrating energy minimization and dictionary key utilization : http://34.210.39.113:8888/notebooks/GSoC2017_notebook_3_energy_minimization_overview.ipynb
-- Demonstrating energy minimized ligand rendering with protein and not energy minimized ligand : http://34.210.39.113:8888/notebooks/GSoC2017_notebook_4_energy_minimization_and_visualization_(protein-ligand).ipynb
+- Demonstrating energy minimization and dictionary key utilization : https://github.com/malithakabir/RDKitGSoC2017/blob/master/GSoC2017_notebook_3_energy_minimization_overview.ipynb
+- Demonstrating energy minimized ligand rendering with protein and not energy minimized ligand : https://github.com/malithakabir/RDKitGSoC2017/blob/master/GSoC2017_notebook_4_energy_minimization_and_visualization_%2528protein-ligand%2529.ipynb
 - A powerpoint slide (draft version) for RDKit UserGroupMeeting (will be held on September 2017).
 ### GitHub Pull Request Link
 - https://github.com/rdkit/rdkit/pull/1484
