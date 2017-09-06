@@ -1,3 +1,4 @@
+### Disclaimer: The updated codes are in updateAfterGSoC folder. The rest are out-of-date.
 # RDKitGSoC2017
 ## RDKit - 3Dmol.js integration
 #### Mentors: Paul Czodrowski and Greg Landrum<br>Acknowledgement: Peter Gedeck reviewed codes, provided advice on code restructuring, and wrote initial MolViewState class. <br>Date: 29th August 2017<br>Email: malitha12345@gmail.com
