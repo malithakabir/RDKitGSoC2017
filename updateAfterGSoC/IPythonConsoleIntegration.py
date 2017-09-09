@@ -65,7 +65,7 @@ def Check3Dmolpromise():
     """ % uniqueid
     return(scriptHTML(input_form + javascript))
     
-def ProcessLigandDict(ligandDict, createChildKey = 'parent'):
+def ProcessLigandDict(ligandDict, createChildKey = 'lig'):
     """This function adds another key to the dictionary of the molecule."""
     if isinstance(ligandDict, dict) is False:
         raise TypeError("ligandDict must be a dictionary")
@@ -83,7 +83,7 @@ def ProcessLigandDict(ligandDict, createChildKey = 'parent'):
         newLigandDict[molId][createChildKey] = ligandDict[molId]
     return newLigandDict
     
-def CopyMolWithChildKey(ligandDict, copyFrom = 'parent', newChildKey = 'minimized'):
+def CopyMolWithChildKey(ligandDict, copyFrom = 'lig', newChildKey = 'emLig'):
     """This function adds another key to the dictionary of the molecule."""
     if isinstance(ligandDict, dict) is False:
         raise TypeError("ligandDict must be a dictionary")
@@ -95,7 +95,7 @@ def CopyMolWithChildKey(ligandDict, copyFrom = 'parent', newChildKey = 'minimize
         newMol = copy.deepcopy(oldMol)
         ligandDict[molId][newChildKey] = newMol
         
-def ConfGenInLigandDict(ligandDict, onChildKey = 'minimized', numConfs = 10, molIds = 'allMols'):
+def ConfGenInLigandDict(ligandDict, onChildKey = 'emLig', numConfs = 10, molIds = 'allMols'):
     """This function adds another key to the dictionary of the molecule."""
     if molIds is 'allMols':
         molIds = list(ligandDict.keys())
@@ -105,7 +105,7 @@ def ConfGenInLigandDict(ligandDict, onChildKey = 'minimized', numConfs = 10, mol
     for molId in molIds:
         AllChem.EmbedMultipleConfs(ligandDict[molId][onChildKey], numConfs=numConfs, params=params)
         
-def MinimizeLigand(ligandDict, onChildKey = 'minimized',
+def MinimizeLigand(ligandDict, onChildKey = 'emLig',
                    createPerConfDataKey = 'energy',
                    molAndConfIds = 'allConfs', 
                    ff = 'UFF', 
@@ -153,7 +153,7 @@ def MinimizeLigand(ligandDict, onChildKey = 'minimized',
         else:
             raise ValueError("invalid conformer id")
             
-def AddPropToLigandDict(ligandDict, onChildKey = 'minimized'):
+def AddPropToLigandDict(ligandDict, onChildKey = 'emLig'):
     """ Add property to the mol """
     for molId in ligandDict:
         mol = ligandDict[molId][onChildKey]
@@ -165,10 +165,10 @@ class MolViewState(object):
     def __init__(self, 
                  molecules, 
                  protein, 
-                 additionalChildKeysForMolRender = ['parent'],
-                 childKeyForConfSelection = 'minimized',
+                 additionalChildKeysForMolRender = ['lig'],
+                 childKeyForConfSelection = 'emLig',
                  childKeyForDataPerConf = 'energy',
-                 childKeyForPropSelection = 'minimized'):
+                 childKeyForPropSelection = 'emLig'):
         """ Molecules is dictionary of molecules """
         
         self.ligandDict = molecules
@@ -244,24 +244,43 @@ class MolViewState(object):
     @property
     def selectedModels(self):
         """ Iterator over all selected models (molecules/conformations) """
-        modelDict = {}
         k_for_conf = self.childKeyForConfSelection
         k_for_additional = self.additionalChildKeysForMolRender
+        
+        modelDict = {}
+        modelId = -1
         
         for (molId, confId) in self.idPaired:
             molData = self.ligandDict[molId]
             confKey = k_for_conf in list(molData.keys())
             if confKey:
                 mol_with_conf = molData[k_for_conf]
-                modelDict[k_for_conf] = Chem.MolToMolBlock(mol_with_conf,confId=confId)
+                modelId = modelId + 1
+                modelDict[modelId] = {}
+                modelDict[modelId]['geom'] = Chem.MolToMolBlock(mol_with_conf,confId=confId)
+                modelDict[modelId]['categoryForDrawing'] = k_for_conf
+                modelDict[modelId]['molAndConfId'] = (molId, confId)
+                modelDict[modelId]['molType'] = 'ligand'
                 for key in k_for_additional:
-                    additionalkey = key in list(molData.keys())
-                    if additionalkey:
+                    additionalkeyLogical = key in list(molData.keys())
+                    if additionalkeyLogical:
                         mol_additional = molData[key]
                         if confId in list(range(mol_additional.GetNumConformers())):
-                            modelDict[key] = Chem.MolToMolBlock(mol_additional,confId=confId)
-            yield modelDict
-            
+                            modelId = modelId + 1
+                            modelDict[modelId] = {}
+                            modelDict[modelId]['geom'] = Chem.MolToMolBlock(mol_additional,confId=confId)
+                            modelDict[modelId]['categoryForDrawing'] = key
+                            modelDict[modelId]['molAndConfId'] = (molId, confId)
+                            modelDict[modelId]['molType'] = 'ligand'
+        if self.protein is not None:
+            modelId = modelId + 1
+            modelDict[modelId] = {}
+            modelDict[modelId]['geom'] = Chem.MolToPDBBlock(self.protein)
+            modelDict[modelId]['categoryForDrawing'] = 'protein'
+            modelDict[modelId]['molAndConfId'] = 'notRequired'
+            modelDict[modelId]['molType'] = 'protein'
+        yield modelDict
+        
     @property
     def selectedMolNames(self):
         """ Return the names of all selected molecules """
@@ -339,33 +358,31 @@ class MolView3D(object):
     def __init__(self, 
                  ligandDict = None,
                  protein = None, 
-                 childKeysForMolRender = ['parent', 'minimized'], 
-                 childKeyForConfSelection = 'minimized',
+                 childKeysForMolRender = ['lig', 'emLig'], 
+                 childKeyForConfSelection = 'emLig',
                  childKeyForDataPerConf = 'energy',
-                 childKeyForPropSelection = 'minimized',
+                 childKeyForPropSelection = 'emLig',
                  ligStyle = ['stick', 'stick'], protStyle='cartoon',
                  ligColor = ['default','orangeCarbon'], protColor='ssJmol',
                  molVisibilityPanel = True, 
-                 stylePanel = None, 
+                 stylePanel = True, 
                  labelPanel = False,
                  propertyPanel = False,
                  emPanel = False,
                  molAndConfIds = 'allConfs'):
         """This function initiates required widgets and 3Dmol.js viewer"""
-        if stylePanel is not None:
-            if stylePanel not in ('lig', 'prot', 'ligprot'):
-                raise KeyError('stylePanel can be: lig, prot, ligprot')
+        if ligandDict is not None:
+            keys = list(ligandDict.keys())
+            keysChild = list(ligandDict[keys[0]].keys())
+            if len(keysChild) == 1:
+                childKeysForMolRender = keysChild
                 
         if type(childKeysForMolRender) is not list:
             raise TypeError('childKeysForMolRender must be a list')
             
-        self.wgNameForLigandVisible = []
-        self.wgNameForLigandStyle = []
-        self.wgNameForLigandColor = []
-        self.onStart = True
-        self.wg_values = {}
-        
-        
+        if len(childKeysForMolRender) == 1:
+            childKeyForConfSelection = childKeysForMolRender[0]
+            
         self.childKeysForMolRender = childKeysForMolRender
         self.childKeyForConfSelection = childKeyForConfSelection
         
@@ -396,8 +413,6 @@ class MolView3D(object):
         self.itemLayout=Layout(display='flex', flex_flow='row', 
                                justify_content='flex-start', 
                                height=self.wg_height)
-        self.widgetsFor3DView = []
-        
         self.allWidgets = ['wg_selectedMolsConfsView',
                            'wg_selectConfIdfrom', 
                            'wg_selectAllMols', 'wg_selectAllConfs',
@@ -426,10 +441,15 @@ class MolView3D(object):
             self.EnergyMinimizationDataViewPanelUI()
             
         # stylePanel
-        if stylePanel is not None:
-            if stylePanel:
-                self.StylePanelUI()
-        
+        if stylePanel:
+            if ligandDict is not None and protein is not None:
+                self.stylePanel = 'ligprot'
+            elif ligandDict is not None:
+                self.stylePanel = 'lig'
+            else:
+                self.stylePanel = 'prot'
+            self.StylePanelUI()
+            
         # add conf labels and atom labels 
         if labelPanel:
             self.LabelPanelUI()
@@ -453,12 +473,6 @@ class MolView3D(object):
                         childKeyForPropSelection,
                         molAndConfIds = None)
         
-    def GetWidgetValue(self):
-        """this captures values from all the widgets except wg_modelSelect, wg_modelAdd and wg_zoomTo"""
-        for wg in self.allWidgets:
-            if wg in self.__dict__:
-                self.wg_values[wg] = self.__dict__[wg].value
-                
     def MoleculeSelectionPanelUI(self):
         """ligand selection widgets"""
         self.wg_selectedMolsConfsView = HTML(description='', value='')
@@ -479,7 +493,7 @@ class MolView3D(object):
         b3 = Box([Label(value=''), box_for_allmol_allconf], layout=self.itemLayout)
         
         molIdLayout = Layout(display='flex', justify_content='flex-start', width='200px', height=self.wg_height)
-        confIdLayout = Layout(display='flex', justify_content='flex-start', width='140px', height=self.wg_height)
+        confIdLayout = Layout(display='flex', justify_content='flex-start',width='140px', height=self.wg_height)
         
         self.wg_molId = Dropdown(description='molId', options=['select'],value='select', layout=molIdLayout)
         self.wg_confId = Dropdown(description='confId', options=['select'], value='select', layout=confIdLayout)
@@ -512,7 +526,6 @@ class MolView3D(object):
                 wgName = 'wg_' + name + 'Visible'
                 self.__dict__[wgName] = Checkbox(description = wgName[3:], value=True)
                 self.wgBox.append(Box([Label(value=''), self.__dict__[wgName]], layout=self.itemLayout))
-                self.wgNameForLigandVisible.append(wgName)
                 self.allWidgets.append(wgName)
                     
     def PropertyViewPanelUI(self):
@@ -533,7 +546,6 @@ class MolView3D(object):
         for (ids,name) in enumerate(self.childKeysForMolRender):
             
             wgNameForStyle = 'wg_' + name + 'Style'
-            self.wgNameForLigandStyle.append(wgNameForStyle)
             
             self.__dict__[wgNameForStyle] = Dropdown(description=wgNameForStyle[3:], 
                                                      options=DRAWING_LIGAND_3D,
@@ -543,7 +555,6 @@ class MolView3D(object):
                                   ], layout=self.itemLayout))
             
             wgNameForColor = 'wg_' + name + 'Color'
-            self.wgNameForLigandColor.append(wgNameForColor)
             
             self.__dict__[wgNameForColor] = Dropdown(description=wgNameForColor[3:], 
                                                      options=COLOR_SCHEME_3D,
@@ -633,6 +644,7 @@ class MolView3D(object):
         
     def handle_reDraw_button(self, b):
         """This function handles reDraw button"""
+        self.previous_state = self.model_prop
         self.render3D()
         
     def handle_zoomTo_button(self, b):
@@ -673,7 +685,7 @@ class MolView3D(object):
                         childKeyForPropSelection = self.childKeyForPropSelection,
                         molAndConfIds = None, reinstantiated = True)
                         
-    def UpdateConfId(self, childKeyForConfSelection = 'minimized'):
+    def UpdateConfId(self, childKeyForConfSelection = 'emLig'):
         """This function update the childKeys from which conf ids rendered"""
         self.childKeyForConfSelection = childKeyForConfSelection
         self.wg_selectConfIdfrom.value = childKeyForConfSelection
@@ -728,12 +740,16 @@ class MolView3D(object):
     def SetMolData(self, 
                    ligandDict = None, 
                    protein = None, 
-                   childKeysForMolRender = ['parent', 'minimized'], 
-                   childKeyForConfSelection = 'minimized',
+                   childKeysForMolRender = ['lig', 'emLig'], 
+                   childKeyForConfSelection = 'emLig',
                    childKeyForDataPerConf = 'energy',
-                   childKeyForPropSelection = 'minimized',
+                   childKeyForPropSelection = 'emLig',
                    molAndConfIds = None, reinstantiated = False):
         """This function sets ligand dictionary, protein, and dict keys and initiates MolViewState class"""
+        
+        self.onStart = True
+        self.previous_state = {}
+        self.model_prop = {}
         
         if isinstance(ligandDict, dict) is False:
             raise TypeError("ligandDict must be dict")
@@ -795,6 +811,19 @@ class MolView3D(object):
         else:
             self.wg_energyView.value = 'data not found'
             
+    def GetAppliedStateRed(self):
+        """this captures values from all the widgets except wg_modelSelect, wg_modelAdd and wg_zoomTo"""
+        for wg in self.allWidgets:
+            if wg in self.__dict__:
+                self.wg_values[wg] = self.__dict__[wg].value
+        self.wg_values['selectedMolsConfs'] = self.molViewState.idPaired
+        
+    def CompareWithPreviousStateRed(self):
+        """this compares widget values previous and current state"""
+        self.previous_state = self.wg_values
+        self.GetAppliedState()
+        self.new_wg_values = self.wg_values
+        
     def AddLigandLabels(self):
         """ Handles ligand labeling (conf label and atom label) in render3D function """
         
@@ -814,97 +843,306 @@ class MolView3D(object):
                                                'position' : {'x':xyz[0], 'y':xyz[1], 'z':xyz[2]}
                                               })
                     
-    def AddLigandStyle(self, name, modelId):
-        """ Handles ligand and energy minimized ligand drawing style and color in AddLigandWithStyle function """
-        wgNameStyle = 'wg_' + name + 'Style'
-        wgNameColor = 'wg_' + name + 'Color'
-        
-        style = self.__dict__[wgNameStyle].value if wgNameStyle in self.__dict__  else self.ligStyleScheme[name]
-        color = self.__dict__[wgNameColor].value if wgNameColor in self.__dict__ else self.ligColorScheme[name]
-        
-        coloring = 'colorscheme'
-        if style == 'surface':
-            self.view.addSurface('SES', {'model':modelId});
-        elif style == 'ballstick':
-            self.view.setStyle({'model':modelId},{'stick':{'radius':'0.2', coloring: color},
-                                                  'sphere':{'radius':'0.4', coloring: color}
-                                                 });
-        else:
-            self.view.setStyle({'model': modelId},{style:{coloring: color}})
-            
-    def AddProteinStyle(self):
+    def AddProteinStyle(self, modelId):
         """ Handles protein drawing style in AddProteinWithStyle function """
-        style = self.wg_protStyle.value if 'wg_protStyle' in self.__dict__ else self.protStyle
-        color = self.wg_protColorScheme.value if 'wg_protColorScheme' in self.__dict__ else self.protColorScheme
-        coloring = 'colorscheme'
         
-        if style == 'surface':
-            self.view.addSurface('SES', {'model': self.proteinModelId, coloring: color});
-            
-        elif style == 'line':
-            self.view.setStyle({'model': self.proteinModelId},{'line':{coloring: color}});
-            
-        elif style == 'cartoon':
-            self.view.setStyle({'model': self.proteinModelId},{'cartoon':{coloring: color, 
-                                                                          'arrows': 'true'}
-                                                              })
-        else:
-            self.view.setStyle({'model': self.proteinModelId},{'cartoon':{coloring: color,
-                                                                          'arrows': 'true', 
-                                                                          'tubes' : 'true'}
-                                                              })
-            
-    def AddLigandWithStyle(self):
-        """ add ligand and energy minimized ligand in viewer (called in render3D function) """
-        if self.molViewState.ligandDict is not None:
-            self.modelId = -1
-            for models in self.molViewState.selectedModels:
-                for modelName in list(models.keys()):
-                    if modelName in self.childKeysForMolRender:
-                        wgName = 'wg_'+ modelName + 'Visible'
-                        if wgName in self.__dict__:
-                            if self.__dict__[wgName].value:
-                                self.view.addModel(models[modelName], 'sdf')
-                                self.modelId = self.modelId + 1
-                                self.AddLigandStyle(modelName, self.modelId)
-                        else:
-                            self.view.addModel(models[modelName], 'sdf')
-                            self.modelId = self.modelId + 1
-                            self.AddLigandStyle(modelName, self.modelId)
-                            
-    def AddProteinWithStyle(self):
-        """ add protein in viewer (called in render3D function) """
-        if self.molViewState.protein is not None:
-            if 'wg_proteinVisible' in self.__dict__:
-                if self.wg_proteinVisible.value:
-                    pdb = Chem.MolToPDBBlock(self.molViewState.protein)
-                    self.view.addModel(pdb,'pdb')
-                    self.proteinModelId = self.modelId + 1
-                    self.AddProteinStyle()
-            else:
-                pdb = Chem.MolToPDBBlock(self.molViewState.protein)
-                self.view.addModel(pdb,'pdb')
-                self.proteinModelId = self.modelId + 1
-                self.AddProteinStyle()
+        colorFunc = 'colorscheme'
+        selectedModel = self.model_prop[modelId]
+        style = selectedModel['style']
+        color = selectedModel['color']
+        hidden = selectedModel['hidden']
+        
+        if hidden is False:
+            if style == 'surface':
+                self.view.addSurface('SES', {'model': modelId});
                 
+            elif style == 'line':
+                self.view.setStyle({'model': modelId},{'line':{colorFunc: color}});
+
+            elif style == 'cartoon':
+                self.view.setStyle({'model': modelId},{'cartoon':{colorFunc: color,
+                                                                  'arrows': 'true'}
+                                                      })
+            else:
+                self.view.setStyle({'model': modelId},{'cartoon':{colorFunc: color,
+                                                                  'arrows': 'true', 
+                                                                  'tubes' : 'true'}
+                                                      })
+        if hidden and style != 'surface':
+            if style == 'line':
+                self.view.setStyle({'model': modelId},{'line':{'hidden' : 'true'}});
+                
+            elif style == 'cartoon':
+                self.view.setStyle({'model': modelId},{'cartoon':{'hidden' : 'true'}
+                                                      })
+            else:
+                self.view.setStyle({'model': modelId},{'cartoon':{'hidden' : 'true'}
+                                                      })
+                
+    def AddLigandStyle(self, modelId):
+        """ Handles ligand drawing style and color in AddLigandWithStyle function """
+        colorFunc = 'colorscheme'
+        selectedModel = self.model_prop[modelId]
+        style = selectedModel['style']
+        color = selectedModel['color']
+        hidden = selectedModel['hidden']
+        #hidden = 'true' if selectedModel['hidden'] else 'false'
+        
+        if hidden is False:
+            if style == 'surface':
+                self.view.addSurface('SES', {'model':modelId});
+            elif style == 'ballstick':
+                self.view.setStyle({'model':modelId},{'stick':{'radius':'0.2', 
+                                                               colorFunc: color},
+                                                      'sphere':{'radius':'0.4', 
+                                                                colorFunc: color}
+                                                     });
+            else:
+                self.view.setStyle({'model': modelId},{style:{colorFunc: color}})
+                
+        if hidden and style != 'surface':
+            if style == 'ballstick':
+                self.view.setStyle({'model':modelId},{'stick':{'hidden' : 'true'},
+                                                      'sphere':{'hidden' : 'true'}
+                                                     });
+            else:
+                self.view.setStyle({'model': modelId},{style:{'hidden' : 'true'}})
+                
+    def RenderModel(self, callFrom = 'onStart'):
+        """ add ligand and energy minimized ligand in viewer (called in render3D function) """
+        
+        modelIds = list(self.model_prop.keys())
+        
+        for modelId in modelIds:
+            
+            selectedModel = self.model_prop[modelId]
+            #print(selectedModel)
+            
+            
+            if callFrom == 'onStart':
+                if selectedModel['molType'] == 'ligand':
+                    self.view.addModel(selectedModel['geom'], 'sdf')
+                else:
+                    self.view.addModel(selectedModel['geom'], 'pdb')
+                    
+            if callFrom == 'onUpdate' and modelId > self.lastMoldelId:
+                if selectedModel['molType'] == 'ligand':
+                    self.view.addModel(selectedModel['geom'], 'sdf')
+                else:
+                    self.view.addModel(selectedModel['geom'], 'pdb')
+                    
+            
+            
+            if modelId > self.lastMoldelId:
+                
+                if selectedModel['molType'] == 'ligand':
+                    self.AddLigandStyle(modelId)
+                else:
+                    self.AddProteinStyle(modelId)
+                    
+            else:
+                if selectedModel['reDraw']:
+                    
+                    if selectedModel['molType'] == 'ligand':
+                        self.AddLigandStyle(modelId)
+                    else:
+                        self.AddProteinStyle(modelId)
+                        
+                
+    def CreateModelData(self, modelId, molAndConfId, geom, category, molType, callFrom = 'onStart'):
+        
+        if molType == 'ligand':
+            wgStyle = 'wg_' + category + 'Style'
+            wgColor = 'wg_' + category + 'Color'
+            style = self.__dict__[wgStyle].value if wgStyle in self.__dict__  else self.ligStyleScheme[category]
+            color = self.__dict__[wgColor].value if wgColor in self.__dict__ else self.ligColorScheme[category]
+            
+        if molType == 'protein':
+            wgStyle = 'wg_protStyle'
+            wgColor = 'wg_protColor'
+            style=self.__dict__[wgStyle].value if wgStyle in self.__dict__  else self.protStyleScheme
+            color = self.__dict__[wgColor].value if wgColor in self.__dict__ else self.protColorScheme
+            
+        if callFrom == 'onStart':
+            self.model_prop[modelId] = {}
+            self.model_prop[modelId]['style'] = style
+            self.model_prop[modelId]['color'] = color
+            self.model_prop[modelId]['molType'] = molType
+            self.model_prop[modelId]['categoryForDrawing'] = category
+            self.model_prop[modelId]['molAndConfId'] = molAndConfId
+            self.model_prop[modelId]['geom'] = geom
+            self.model_prop[modelId]['reDraw'] = 'notApplicableOption'
+            self.model_prop[modelId]['hidden'] = False
+            self.model_prop[modelId]['newModel'] = True
+            self.model_prop[modelId]['uniqueid'] = 'onStart'
+            
+        if callFrom == 'onUpdate':
+            self.model_temp[modelId] = {}
+            self.model_temp[modelId]['style'] = style
+            self.model_temp[modelId]['color'] = color
+            self.model_temp[modelId]['molType'] = molType
+            self.model_temp[modelId]['categoryForDrawing'] = category
+            self.model_temp[modelId]['molAndConfId'] = molAndConfId
+            self.model_temp[modelId]['geom'] = geom
+            self.model_temp[modelId]['hidden'] = False
+            
+    def ModelAdd(self, callFrom = 'onStart'):
+        data = next(self.molViewState.selectedModels)
+        for modelId in list(data.keys()):
+            selectedModel = data[modelId]
+            #print(selectedModel)
+            molAndConfId = selectedModel['molAndConfId']
+            geom = selectedModel['geom']
+            category = selectedModel['categoryForDrawing']
+            molType = selectedModel['molType']
+            self.CreateModelData(modelId = modelId, 
+                                 molAndConfId = molAndConfId, 
+                                 geom = geom, 
+                                 category = category, 
+                                 molType = molType, 
+                                 callFrom = callFrom)
+            
+    def ModelUpdate(self):
+        """this compares widget values previous and current state"""
+        
+        uniqueid = str(time.time()).replace('.','')
+        
+        oldData = self.model_prop
+        newData = self.model_temp
+        
+        self.lastMoldelId = max(list(oldData.keys()))
+        self.modelIdsForSurface = []
+        
+        molAndConfId = []
+        categoryForDrawing = []
+        modelIdsAll = []
+        
+        for oldModelId in list(oldData.keys()):
+            oldSelectedData = oldData[oldModelId]
+            molAndConfId.append(oldSelectedData['molAndConfId'])
+            categoryForDrawing.append(oldSelectedData['categoryForDrawing'])
+            modelIdsAll.append(oldModelId)
+            
+            if oldSelectedData['style'] == 'surface' and oldSelectedData['hidden'] is False:
+                self.modelIdsForSurface.append(oldModelId)
+            
+        for newModelId in list(newData.keys()):
+            newSelectedData = newData[newModelId]
+            newMolAndConfId = newSelectedData['molAndConfId']
+            newCategoryForDrawing = newSelectedData['categoryForDrawing']
+            
+            if newMolAndConfId in molAndConfId:
+                indices = [i for i,x in enumerate(molAndConfId) if x == newMolAndConfId]
+                ind = [i for i in indices if categoryForDrawing[i] == newCategoryForDrawing]
+                
+                if len(ind) == 1:
+                    modelId = modelIdsAll[ind[0]]
+                    oldSelectedData = oldData[modelId]
+                    
+                    oldSelectedData['previousHidden'] = oldSelectedData['hidden']
+                    oldSelectedData['hidden'] = False
+                    oldSelectedData['newModel'] = False
+                    
+                    if oldSelectedData['previousHidden']:
+                        oldSelectedData['reDraw'] = True
+                        # was hidden previously
+                    else:
+                        # was active in view previously
+                        newStyle = newSelectedData['style']
+                        newColor = newSelectedData['color']
+                        oldStyle = oldSelectedData['style']
+                        oldColor = oldSelectedData['color']
+                        
+                        tempData = False if newStyle == oldStyle and newColor == oldColor else True
+                        oldSelectedData['reDraw'] = tempData
+                        
+                        # For surface ignore color change
+                        if newStyle == 'surface' and newStyle == oldStyle: 
+                            oldSelectedData['reDraw'] = False
+                            
+                    oldSelectedData['uniqueid'] = uniqueid
+                    oldSelectedData['style'] = newSelectedData['style']
+                    oldSelectedData['color'] = newSelectedData['color']
+                else:
+                    #len(ind) == 0
+                    newMoldelId = max(list(oldData.keys())) + 1
+                    oldData[newMoldelId] = newSelectedData
+                    oldData[newMoldelId]['reDraw'] = 'notApplicableOption'
+                    oldData[newMoldelId]['newModel'] = True
+                    oldData[newMoldelId]['uniqueid'] = uniqueid
+                    
+            else:
+                newMoldelId = max(list(oldData.keys())) + 1
+                oldData[newMoldelId] = newSelectedData
+                oldData[newMoldelId]['reDraw'] = 'notApplicableOption'
+                oldData[newMoldelId]['hidden'] = False
+                oldData[newMoldelId]['newModel'] = True
+                oldData[newMoldelId]['uniqueid'] = uniqueid
+                
+        for oldModelId in list(oldData.keys()):
+            oldSelectedData = oldData[oldModelId]
+            if oldSelectedData['uniqueid'] != uniqueid:
+                oldSelectedData['uniqueid'] = uniqueid
+                oldSelectedData['hidden'] = True
+                oldSelectedData['newModel'] = False
+                oldSelectedData['reDraw'] = 'notApplicableOption'
+    
+    def toggleHidden(self):
+        
+        modelIds = list(self.model_prop.keys())
+        
+        for modelId in modelIds:
+            
+            selectedModel = self.model_prop[modelId]
+            #print(selectedModel)
+            category = selectedModel['categoryForDrawing']
+            wgVisible = 'wg_' + category + 'Visible'
+            if wgVisible in self.__dict__:
+                if self.__dict__[wgVisible].value:
+                    selectedModel['hidden'] = False
+                else:
+                    selectedModel['hidden'] = True
+                    
+    def removeAllSurfaceIfToggledToHidden(self):
+        
+        surfaceRemove = False
+        oldData = self.model_prop
+        
+        for modelId in self.modelIdsForSurface:
+            oldSelectedData = oldData[modelId]
+            if oldSelectedData['style'] != 'surface':
+                surfaceRemove = True
+            if oldSelectedData['hidden']:
+                surfaceRemove = True
+                
+        if surfaceRemove:
+            self.view.removeAllSurfaces()
+            
     def render3D(self):
         """ This function updates the 3DMol.js viewer"""
-        self.view.removeAllLabels()
-        self.view.removeAllModels()
-        self.view.removeAllSurfaces()
         
-        self.GetWidgetValue()
+        self.model_temp = {}
+        self.view.removeAllLabels()
+        
+        if self.onStart:
+            self.ModelAdd(callFrom = 'onStart')
+            self.lastMoldelId = -1
+            self.RenderModel(callFrom = 'onStart')
+        else:
+            self.ModelAdd(callFrom = 'onUpdate')
+            self.ModelUpdate()
+            self.toggleHidden()
+            self.removeAllSurfaceIfToggledToHidden()
+            self.RenderModel(callFrom = 'onUpdate')
+            
+        
         
         self.view.setBackgroundColor(self.wg_background.value)
-        
-        self.AddLigandWithStyle()
         
         # add label if required
         if self.labelPanel:
             self.AddLigandLabels()
             
-        self.AddProteinWithStyle()
-        
         # zoomTo does not work well for surface and label... so, zoomTo should not be default settings
         if self.onStart:
             self.view.zoomTo()
