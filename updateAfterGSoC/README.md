@@ -1,7 +1,9 @@
 ## This folder contains updated notebooks and images developed after GSoC2017
-### Updated source file location: <ul> <li>Can be found at rdkit/rdkit (master or GSoC2017 branch) repo </li><li> Or please see malithakabir/rdkit repo</li></ul>
-#### Pull request link (updated on 12th September 2017): https://github.com/rdkit/rdkit/pull/1562
-# Gallery
+### Updated source file location:
+#### <ul> <li>Can be found at rdkit/rdkit (master or GSoC2017 branch) repo </li><li> Or please see malithakabir/rdkit repo</li></ul>
+### Pull request link (updated on 12th September 2017):
+#### <ul><li>https://github.com/rdkit/rdkit/pull/1562</li></ul>
+## Gallery
 ##### notebook 1
 ![image from notebook 1](https://github.com/malithakabir/RDKitGSoC2017/blob/master/updateAfterGSoC/notebook_1.png)
 ##### notebook 2
