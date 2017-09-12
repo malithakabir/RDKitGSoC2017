@@ -4,4 +4,4 @@
 New pull request link (12th September 2017): https://github.com/rdkit/rdkit/pull/1562
 ### Thank you
 # Gallery
-[[RDKitGSoC2017/updateAfterGSoC/notebook_1.png]]
+![alternate text](https://github.com/malithakabir/RDKitGSoC2017/blob/master/updateAfterGSoC/notebook_1.png)
